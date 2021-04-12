@@ -21,14 +21,19 @@ const register = async (req, res) => {
 
     if (errMsg) return res.status(400).json({ err: errMsg });
 
+    const user = await Users.findOne({ email });
+
+    if (user)
+      return res.status(400).json({ err: "user with email already exists" });
+
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const newUser = new Users({ name, email, hashedPassword });
+    const newUser = new Users({ name, email, password: hashedPassword });
 
-    console.log(newUser);
+    await newUser.save();
 
     return res.status(200).json({ msg: "User Registration Successfull" });
-  } catch (err) {
+  } catch (error) {
     console.error(error);
     return res.status(500).json({ err: error.message });
   }

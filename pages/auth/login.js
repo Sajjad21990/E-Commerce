@@ -1,7 +1,62 @@
-import React from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Link from "next/link";
+import { postData } from "../../helpers/fetchData";
+import { DataContext } from "../../store/GlobalState";
+import Cookies from "js-cookie";
+import { useRouter } from "next/router";
 
 const Login = () => {
+  const initialState = {
+    email: "",
+    password: "",
+  };
+
+  const [userData, setUserData] = useState(initialState);
+  const { email, password } = userData;
+  const { state, dispatch } = useContext(DataContext);
+  const { auth } = state;
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (Object.keys(auth).length !== 0) router.push("/");
+  }, [auth]);
+
+  const handleInputChange = (e) => {
+    const { value, name } = e.target;
+
+    setUserData({ ...userData, [name]: value });
+  };
+
+  const handleUserLogin = async (e) => {
+    e.preventDefault();
+
+    dispatch({ type: "NOTIFY", payload: { loading: true } });
+
+    const response = await postData("auth/login", userData);
+
+    if (response.err)
+      return dispatch({ type: "NOTIFY", payload: { error: response.err } });
+
+    dispatch({
+      type: "AUTH",
+      payload: {
+        token: response.accessToken,
+        user: response.user,
+      },
+    });
+
+    Cookies.set("refreshToken", response.refreshToken, {
+      path: "api/auth/refreshToken",
+      expires: 7,
+    });
+    localStorage.setItem("firstLogin", true);
+
+    dispatch({ type: "NOTIFY", payload: { success: response.msg } });
+
+    console.log(response);
+  };
+
   return (
     <>
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -34,11 +89,13 @@ const Login = () => {
                 <input
                   id="email-address"
                   name="email"
+                  value={email}
                   type="email"
                   autoComplete="email"
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Email address"
+                  onChange={handleInputChange}
                 />
               </div>
               <div>
@@ -49,10 +106,12 @@ const Login = () => {
                   id="password"
                   name="password"
                   type="password"
+                  value={password}
                   autoComplete="current-password"
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Password"
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -60,13 +119,13 @@ const Login = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
-                  id="remember_me"
-                  name="remember_me"
+                  id="checked"
+                  name="checked"
                   type="checkbox"
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
                 <label
-                  htmlFor="remember_me"
+                  htmlFor="checked"
                   className="ml-2 block text-sm text-gray-900"
                 >
                   Remember me
@@ -86,6 +145,7 @@ const Login = () => {
               <button
                 type="submit"
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={handleUserLogin}
               >
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                   <svg

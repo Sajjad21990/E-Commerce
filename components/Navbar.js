@@ -1,9 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import Link from "next/link";
+import { DataContext } from "../store/GlobalState";
+import Cookies from "js-cookie";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faShoppingCart } from "@fortawesome/free-solid-svg-icons";
 
 const Navbar = () => {
   const [profileDropdownIsOpen, setProfileDropdownIsOpen] = useState(false);
   const [mobileMenuIsOpen, setMobileMenuIsOpen] = useState(false);
+
+  const { state, dispatch } = useContext(DataContext);
+
+  const { auth, cart } = state;
 
   const onProfilePictureClick = () => {
     setProfileDropdownIsOpen(!profileDropdownIsOpen);
@@ -11,6 +19,18 @@ const Navbar = () => {
 
   const mobileMenuBtnClicked = () => {
     setMobileMenuIsOpen(!mobileMenuIsOpen);
+  };
+
+  const handleLogout = () => {
+    Cookies.remove("refreshToken", {
+      path: "api/auth/refreshToken",
+    });
+    localStorage.removeItem("firstLogin");
+    dispatch({ type: "AUTH", payload: {} });
+    dispatch({
+      type: "NOTIFY",
+      payload: { success: "Logged out successfully" },
+    });
   };
 
   return (
@@ -73,37 +93,56 @@ const Navbar = () => {
                       />
                     </svg>
                   </button>
-                  <Link href="/auth/login">
-                    <a className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
-                      Login
-                    </a>
-                  </Link>
-                  <Link href="/auth/register">
-                    <a className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
-                      Register
-                    </a>
-                  </Link>
-
-                  <div className="ml-3 relative">
-                    <div>
-                      <button
-                        type="button"
-                        className="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
-                        id="user-menu"
-                        aria-expanded="false"
-                        aria-haspopup="true"
-                        onClick={onProfilePictureClick}
+                  {auth && Object.keys(auth).length === 0 ? (
+                    <>
+                      <Link href="/auth/login">
+                        <a className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                          Login
+                        </a>
+                      </Link>
+                      <Link href="/auth/register">
+                        <a className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                          Register
+                        </a>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/cart">
+                        <a className="relative inline-block bg-gray-800 p-1 rounded-full text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                          <FontAwesomeIcon icon={faShoppingCart} />
+                          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                            {cart.length}
+                          </span>
+                        </a>
+                      </Link>
+                      <a
+                        onClick={handleLogout}
+                        className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
                       >
-                        <span className="sr-only">Open user menu</span>
-                        <img
-                          className="h-8 w-8 rounded-full"
-                          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                          alt=""
-                        />
-                      </button>
-                    </div>
+                        Signout
+                      </a>
+                      <div className="ml-3 relative">
+                        <div>
+                          <button
+                            type="button"
+                            className="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+                            id="user-menu"
+                            aria-expanded="false"
+                            aria-haspopup="true"
+                            onClick={onProfilePictureClick}
+                          >
+                            <span className="sr-only">Open user menu</span>
 
-                    {/* Dropdown menu, show/hide based on menu state.
+                            <img
+                              className="h-8 w-8 rounded-full"
+                              src={auth.user.avatar}
+                              alt=""
+                            />
+                          </button>
+                        </div>
+
+                        {/* Dropdown menu, show/hide based on menu state.
         
                         Entering: "transition ease-out duration-100"
                           From: "transform opacity-0 scale-95"
@@ -111,40 +150,42 @@ const Navbar = () => {
                         Leaving: "transition ease-in duration-75"
                           From: "transform opacity-100 scale-100"
                           To: "transform opacity-0 scale-95" */}
-                    {profileDropdownIsOpen ? (
-                      <div
-                        className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
-                        role="menu"
-                        aria-orientation="vertical"
-                        aria-labelledby="user-menu"
-                      >
-                        <Link href="/">
-                          <a
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
+                        {profileDropdownIsOpen ? (
+                          <div
+                            className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                            role="menu"
+                            aria-orientation="vertical"
+                            aria-labelledby="user-menu"
                           >
-                            Your Profile
-                          </a>
-                        </Link>
-                        <Link href="/">
-                          <a
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            Settings
-                          </a>
-                        </Link>
-                        <Link href="/">
-                          <a
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            role="menuitem"
-                          >
-                            Sign out
-                          </a>
-                        </Link>
+                            <Link href="/">
+                              <a
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                role="menuitem"
+                              >
+                                Your Profile
+                              </a>
+                            </Link>
+                            <Link href="/">
+                              <a
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                role="menuitem"
+                              >
+                                Settings
+                              </a>
+                            </Link>
+                            <Link href="/">
+                              <a
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                role="menuitem"
+                              >
+                                Sign out
+                              </a>
+                            </Link>
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="-mr-2 flex md:hidden">

@@ -26,8 +26,7 @@ const userSchema = new Schema(
     },
     avatar: {
       type: String,
-      default:
-        "https://www.flaticon.com/svg/vstatic/svg/3011/3011270.svg?token=exp=1614834247~hmac=f002632d3ddfa783a74a3d588b14e378",
+      default: "https://img.icons8.com/dusk/2x/user-male.png",
     },
   },
   {

@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import Link from "next/link";
 import valid from "../../helpers/valid";
 import { DataContext } from "../../store/GlobalState";
+import { postData } from "../../helpers/fetchData";
 
 const Register = () => {
   const initialState = {
@@ -22,13 +23,20 @@ const Register = () => {
     setUserData({ ...userData, [name]: value });
   };
 
-  const handleUserRegister = (e) => {
+  const handleUserRegister = async (e) => {
     e.preventDefault();
     const errMsg = valid(name, email, password, confirmPassword);
 
     if (errMsg) return dispatch({ type: "NOTIFY", payload: { error: errMsg } });
 
-    dispatch({ type: "NOTIFY", payload: { success: "All Good" } });
+    dispatch({ type: "NOTIFY", payload: { loading: true } });
+
+    const response = await postData("auth/register", userData);
+
+    if (response.err)
+      return dispatch({ type: "NOTIFY", payload: { error: response.err } });
+
+    dispatch({ type: "NOTIFY", payload: { success: response.msg } });
   };
 
   return (
